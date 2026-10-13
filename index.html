@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CAFE STORY">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="robots" content="noindex, nofollow">
+<title>CAFE STORY</title>
+<style>
+  :root {
+    --bg: #fbf1ee;
+    --ink: #4a3238;
+    --ink-soft: #8a6f75;
+    --berry: #e8587a;
+    --pistachio: #a9c9a4;
+    --white: #ffffff;
+    --line: #efd9d4;
+    --check-a: #ffffff;
+    --check-b: #ecdfdb;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  header { padding: 18px 20px 6px; }
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    letter-spacing: .04em;
+    font-weight: 800;
+    color: var(--berry);
+  }
+  .sub { margin: 4px 0 0; font-size: 13px; color: var(--ink-soft); }
+
+  /* Tabs */
+  .tabs {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 12px 20px;
+    background: var(--bg);
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto;
+    border: 2px solid var(--line);
+    background: var(--white);
+    color: var(--ink);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .tab[aria-selected="true"] {
+    background: var(--berry);
+    border-color: var(--berry);
+    color: var(--white);
+  }
+  .tab:focus-visible, .item:focus-visible, .close:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 8px 20px 0;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  @media (min-width: 640px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .item {
+    border: 0;
+    padding: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .thumb {
+    display: block;
+    aspect-ratio: 2 / 1;
+    border-radius: 14px;
+    border: 2px solid var(--line);
+    background-color: var(--check-a);
+    background-image:
+      linear-gradient(45deg, var(--check-b) 25%, transparent 25%, transparent 75%, var(--check-b) 75%),
+      linear-gradient(45deg, var(--check-b) 25%, transparent 25%, transparent 75%, var(--check-b) 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+    padding: 8px;
+    transition: transform .12s ease;
+  }
+  .item:active .thumb { transform: scale(.96); }
+  .thumb img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+  .name { display: block; margin-top: 6px; font-size: 13px; color: var(--ink-soft); }
+  .item.done .thumb { border-color: var(--pistachio); }
+
+  .hint { margin: 18px 20px 0; text-align: center; font-size: 12px; color: var(--ink-soft); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+    transform: translate(-50%, 24px);
+    background: var(--ink);
+    color: var(--white);
+    padding: 14px 24px;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 700;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 30;
+    max-width: calc(100vw - 32px);
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* Modal (first-run guide / fallback) */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(74, 50, 56, .55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 20;
+  }
+  .overlay.open { display: flex; }
+  .sheet {
+    background: var(--white);
+    border-radius: 22px;
+    padding: 24px 22px 20px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
+  .sheet h2 { margin: 0 0 10px; font-size: 18px; }
+  .sheet p { margin: 0 0 16px; font-size: 15px; line-height: 1.7; }
+  .sheet .preview {
+    border-radius: 14px;
+    border: 2px solid var(--line);
+    background-color: var(--check-a);
+    background-image:
+      linear-gradient(45deg, var(--check-b) 25%, transparent 25%, transparent 75%, var(--check-b) 75%),
+      linear-gradient(45deg, var(--check-b) 25%, transparent 25%, transparent 75%, var(--check-b) 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  .sheet .preview img {
+    display: block; width: 100%; height: auto;
+    -webkit-touch-callout: default;
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
+  .close {
+    width: 100%;
+    border: 0;
+    background: var(--berry);
+    color: var(--white);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 14px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toast, .thumb { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CAFE STORY</h1>
+  <p class="sub">使いたい素材をタップ → Instagramで貼り付け</p>
+</header>
+
+<nav class="tabs" role="tablist" id="tabs"></nav>
+<main class="grid" id="grid"></main>
+<p class="hint">テスト版 ／ 背景の市松模様は「透明」の目印です</p>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+/* =====================================================
+   素材リスト
+   ─────────────────────────────────────────────────────
+   ・tabs  : タブの一覧（id と表示名）
+   ・items : 素材の一覧
+       tab   … 属するタブの id
+       name  … 画面に出る名前
+       src   … 本物のPNGのパス（例: "images/cake/new.png"）
+               書かない（null）場合はダミー画像を自動生成
+       dummy … ダミー画像の見た目（text / color / shape）
+
+   本物のPNGを使うとき:
+     1. images/cake/ などにPNGを置く
+     2. 下のitemsに  src: "images/cake/new.png"  を書く
+   ===================================================== */
+const TABS = [
+  { id: "cake",   label: "本日のケーキ" },
+  { id: "info",   label: "お知らせ" },
+  { id: "deco",   label: "装飾" },
+  { id: "season", label: "季節" }
+];
+
+const ITEMS = [
+  // 本日のケーキ
+  { tab: "cake", name: "NEW",       src: null, dummy: { text: "NEW",     color: "#e8587a", shape: "badge" } },
+  { tab: "cake", name: "おすすめ",   src: null, dummy: { text: "おすすめ", color: "#f08a5d", shape: "badge" } },
+  { tab: "cake", name: "本日限定",   src: null, dummy: { text: "本日限定", color: "#7aa874", shape: "badge" } },
+  { tab: "cake", name: "季節限定",   src: null, dummy: { text: "季節限定", color: "#b07acb", shape: "badge" } },
+  { tab: "cake", name: "SOLD OUT",  src: null, dummy: { text: "SOLD OUT", color: "#6b5a5e", shape: "badge" } },
+
+  // お知らせ
+  { tab: "info", name: "営業時間",   src: null, dummy: { text: "営業時間", color: "#4a8fc4", shape: "badge" } },
+  { tab: "info", name: "定休日",     src: null, dummy: { text: "定休日",   color: "#d9607a", shape: "badge" } },
+  { tab: "info", name: "イベント",   src: null, dummy: { text: "イベント", color: "#e0a030", shape: "badge" } },
+  { tab: "info", name: "新商品",     src: null, dummy: { text: "新商品",   color: "#e8587a", shape: "badge" } },
+
+  // 装飾
+  { tab: "deco", name: "キラキラ",   src: null, dummy: { text: "✨", color: "#e0a030", shape: "glyph" } },
+  { tab: "deco", name: "ハート",     src: null, dummy: { text: "♥", color: "#e8587a", shape: "glyph" } },
+  { tab: "deco", name: "星",         src: null, dummy: { text: "★", color: "#f0b429", shape: "glyph" } },
+  { tab: "deco", name: "吹き出し",   src: null, dummy: { text: "ひとこと", color: "#8a6f75", shape: "bubble" } },
+
+  // 季節
+  { tab: "season", name: "桜",       src: null, dummy: { text: "🌸", color: "#f4a6bd", shape: "glyph" } },
+  { tab: "season", name: "ひまわり", src: null, dummy: { text: "🌻", color: "#f0b429", shape: "glyph" } },
+  { tab: "season", name: "もみじ",   src: null, dummy: { text: "🍁", color: "#d9672a", shape: "glyph" } },
+  { tab: "season", name: "雪",       src: null, dummy: { text: "❄", color: "#6fb0d8", shape: "glyph" } }
+];
+
+/* ===================== ダミー画像（透過PNG）を生成 ===================== */
+const FONT = '"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif';
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawDummy(d) {
+  const W = 800, H = 400;
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const ctx = c.getContext("2d"); // 背景は塗らない = 透明
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  if (d.shape === "badge") {
+    roundRect(ctx, 40, 90, W - 80, H - 180, 110);
+    ctx.fillStyle = d.color; ctx.fill();
+    ctx.lineWidth = 14; ctx.strokeStyle = "#ffffff"; ctx.stroke();
+    ctx.fillStyle = "#ffffff";
+    let size = 130;
+    ctx.font = "800 " + size + "px " + FONT;
+    while (ctx.measureText(d.text).width > W - 200 && size > 40) {
+      size -= 6; ctx.font = "800 " + size + "px " + FONT;
+    }
+    ctx.fillText(d.text, W / 2, H / 2 + 6);
+  } else if (d.shape === "bubble") {
+    roundRect(ctx, 60, 50, W - 120, 240, 120);
+    ctx.fillStyle = "#ffffff"; ctx.fill();
+    ctx.lineWidth = 12; ctx.strokeStyle = d.color; ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(330, 285); ctx.lineTo(300, 360); ctx.lineTo(420, 288);
+    ctx.fillStyle = "#ffffff"; ctx.fill();
+    ctx.strokeStyle = d.color; ctx.stroke();
+    ctx.fillStyle = d.color;
+    ctx.font = "800 110px " + FONT;
+    ctx.fillText(d.text, W / 2, 170);
+  } else {
+    ctx.fillStyle = d.color;
+    ctx.font = "330px " + FONT;
+    ctx.fillText(d.text, W / 2, H / 2 + 14);
+  }
+  return c;
+}
+
+const dummyCache = new Map();
+function dummyCanvas(item) {
+  if (!dummyCache.has(item)) dummyCache.set(item, drawDummy(item.dummy));
+  return dummyCache.get(item);
+}
+
+/* ===================== PNG の Blob を用意 ===================== */
+// Safari は「クリック直後に ClipboardItem を作る」必要があるため、
+// Blob は Promise のまま渡す。
+function getBlob(item) {
+  if (item.src) {
+    return fetch(item.src)
+      .then(function (r) {
+        if (!r.ok) throw new Error("fetch failed");
+        return r.blob();
+      })
+      .then(function (b) {
+        return b.type === "image/png" ? b : new Blob([b], { type: "image/png" });
+      });
+  }
+  return new Promise(function (resolve, reject) {
+    dummyCanvas(item).toBlob(function (b) {
+      b ? resolve(b) : reject(new Error("toBlob failed"));
+    }, "image/png");
+  });
+}
+
+function thumbURL(item) {
+  return item.src ? item.src : dummyCanvas(item).toDataURL("image/png");
+}
+
+/* ===================== 画面 ===================== */
+const tabsEl = document.getElementById("tabs");
+const gridEl = document.getElementById("grid");
+const toastEl = document.getElementById("toast");
+const overlayEl = document.getElementById("overlay");
+const sheetEl = document.getElementById("sheet");
+let currentTab = TABS[0].id;
+let toastTimer = null;
+
+function renderTabs() {
+  tabsEl.innerHTML = "";
+  TABS.forEach(function (t) {
+    const b = document.createElement("button");
+    b.className = "tab";
+    b.type = "button";
+    b.role = "tab";
+    b.textContent = t.label;
+    b.setAttribute("aria-selected", t.id === currentTab ? "true" : "false");
+    b.addEventListener("click", function () {
+      currentTab = t.id;
+      renderTabs();
+      renderGrid();
+    });
+    tabsEl.appendChild(b);
+  });
+}
+
+function renderGrid() {
+  gridEl.innerHTML = "";
+  ITEMS.filter(function (i) { return i.tab === currentTab; }).forEach(function (item) {
+    const btn = document.createElement("button");
+    btn.className = "item";
+    btn.type = "button";
+    btn.setAttribute("aria-label", item.name + " をコピー");
+
+    const thumb = document.createElement("span");
+    thumb.className = "thumb";
+    const img = document.createElement("img");
+    img.alt = "";
+    img.src = thumbURL(item);
+    thumb.appendChild(img);
+
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = item.name;
+
+    btn.appendChild(thumb);
+    btn.appendChild(name);
+    btn.addEventListener("click", function () { copyItem(item, btn); });
+    gridEl.appendChild(btn);
+  });
+}
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
+}
+
+function copyItem(item, btn) {
+  // ClipboardItem をクリック処理の中で同期的に作る（Safari対策）
+  let write;
+  try {
+    write = navigator.clipboard.write([
+      new ClipboardItem({ "image/png": getBlob(item) })
+    ]);
+  } catch (e) {
+    openFallback(item);
+    return;
+  }
+  write.then(function () {
+    btn.classList.add("done");
+    showToast("コピーしました");
+  }).catch(function () {
+    openFallback(item);
+  });
+}
+
+/* 自動コピーに失敗したとき: 長押しコピーに切り替える */
+function openFallback(item) {
+  sheetEl.innerHTML = "";
+  const h = document.createElement("h2");
+  h.id = "sheetTitle";
+  h.textContent = "画像を長押ししてコピー";
+  const p = document.createElement("p");
+  p.textContent = "自動でコピーできませんでした。下の画像を長押しして「コピー」を選んでください。";
+  const box = document.createElement("div");
+  box.className = "preview";
+  const img = document.createElement("img");
+  img.alt = item.name;
+  img.src = thumbURL(item);
+  box.appendChild(img);
+  const close = document.createElement("button");
+  close.className = "close";
+  close.type = "button";
+  close.textContent = "閉じる";
+  close.addEventListener("click", closeSheet);
+  sheetEl.appendChild(h); sheetEl.appendChild(p); sheetEl.appendChild(box); sheetEl.appendChild(close);
+  overlayEl.classList.add("open");
+}
+
+/* 初回だけ使い方を表示 */
+function openGuide() {
+  sheetEl.innerHTML = "";
+  const h = document.createElement("h2");
+  h.id = "sheetTitle";
+  h.textContent = "使い方";
+  const p = document.createElement("p");
+  p.innerHTML = "素材をタップすると、画像がコピーされます。<br>Instagramのストーリーで画面を長押しして、<br>「ペースト」を選んでください。";
+  const close = document.createElement("button");
+  close.className = "close";
+  close.type = "button";
+  close.textContent = "わかった";
+  close.addEventListener("click", function () {
+    try { localStorage.setItem("cafeStoryGuideSeen", "1"); } catch (e) {}
+    closeSheet();
+  });
+  sheetEl.appendChild(h); sheetEl.appendChild(p); sheetEl.appendChild(close);
+  overlayEl.classList.add("open");
+}
+
+function closeSheet() { overlayEl.classList.remove("open"); }
+overlayEl.addEventListener("click", function (e) { if (e.target === overlayEl) closeSheet(); });
+
+renderTabs();
+renderGrid();
+
+let seen = false;
+try { seen = localStorage.getItem("cafeStoryGuideSeen") === "1"; } catch (e) {}
+if (!seen) openGuide();
+</script>
+</body>
+</html>
