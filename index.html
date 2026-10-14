@@ -164,7 +164,7 @@
   .item:active { transform: scale(.97); }
   .thumb {
     display: block;
-    aspect-ratio: 2 / 1;
+    aspect-ratio: 1 / 1;
     background-color: var(--check-a);
     background-image:
       linear-gradient(45deg, var(--check-b) 25%, transparent 25%, transparent 75%, var(--check-b) 75%),
@@ -186,7 +186,7 @@
     margin-bottom: 6px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .name { display: block; font-size: 16px; font-weight: 700; letter-spacing: .06em; }
+  .name { display: block; font-size: 15px; line-height: 1.4; font-weight: 700; letter-spacing: .06em; }
   .pill {
     display: block;
     margin-top: 14px;
@@ -324,46 +324,64 @@
        tab   … 属するタブの id
        name  … 画面に出る名前
        en    … 名前の上に出る英語の小さなラベル
-       src   … 本物のPNGのパス（例: "images/cake/new.png"）
+       src   … 本物のPNGのパス（例: "images/new.png"）
                書かない（null）場合はダミー画像を自動生成
        dummy … ダミー画像の見た目（text / color / shape）
 
-   本物のPNGを使うとき:
-     1. images/cake/ などにPNGを置く
-     2. 下のITEMSに  src: "images/cake/new.png"  を書く
+   素材を追加するとき:
+     1. images/ などのフォルダにPNGを置く
+     2. 下のITEMSに1行コピーして、name / en / src を書き換える
+        例: { tab: "cake", name: "いちごのケーキ", en: "Watercolor", src: "images/w-strawberry-cake.png" },
+     3. 新しいタブが欲しいときは TABS に1行足す
    ===================================================== */
 const TABS = [
-  { id: "cake",   label: "本日のケーキ", en: "Today's Cake" },
-  { id: "info",   label: "お知らせ",     en: "Information" },
-  { id: "deco",   label: "装飾",         en: "Decoration" },
-  { id: "season", label: "季節",         en: "Season" }
+  { id: "cake",  label: "ケーキ",     en: "Cake" },
+  { id: "lunch", label: "ランチ",     en: "Lunch" },
+  { id: "info",  label: "お知らせ",   en: "Information" },
+  { id: "deco",  label: "小物・装飾", en: "Goods" }
 ];
 
+// en（英語ラベル）は絵柄の名前: Watercolor=水彩 / Gold Frame=金枠 / Navy=ネイビー
 const ITEMS = [
-  // 本日のケーキ
-  { tab: "cake", name: "NEW",       en: "New",        src: null, dummy: { text: "NEW",      color: "#4aa3a2", shape: "badge" } },
-  { tab: "cake", name: "おすすめ",   en: "Recommend",  src: null, dummy: { text: "おすすめ", color: "#c9707a", shape: "badge" } },
-  { tab: "cake", name: "本日限定",   en: "Today Only", src: null, dummy: { text: "本日限定", color: "#5b3319", shape: "badge" } },
-  { tab: "cake", name: "季節限定",   en: "Seasonal",   src: null, dummy: { text: "季節限定", color: "#b08a28", shape: "badge" } },
-  { tab: "cake", name: "SOLD OUT",  en: "Sold Out",   src: null, dummy: { text: "SOLD OUT", color: "#3e2112", shape: "badge" } },
+  // ── ケーキ ──
+  { tab: "cake", name: "本日のケーキ", en: "Watercolor", src: "images/w-cake-today.png" },
+  { tab: "cake", name: "本日のケーキ", en: "Gold Frame", src: "images/g-cake-today.png" },
+  { tab: "cake", name: "本日のケーキ", en: "Navy",       src: "images/n-cake-today.png" },
+  { tab: "cake", name: "今月のケーキ", en: "Watercolor", src: "images/w-cake-month.png" },
+  { tab: "cake", name: "今月のケーキ", en: "Gold Frame", src: "images/g-cake-month.png" },
+  { tab: "cake", name: "今月のケーキ", en: "Navy",       src: "images/n-cake-month.png" },
 
-  // お知らせ
-  { tab: "info", name: "営業時間",   en: "Open Hours", src: null, dummy: { text: "営業時間", color: "#3a8584", shape: "badge" } },
-  { tab: "info", name: "定休日",     en: "Closed",     src: null, dummy: { text: "定休日",   color: "#c9707a", shape: "badge" } },
-  { tab: "info", name: "イベント",   en: "Event",      src: null, dummy: { text: "イベント", color: "#b08a28", shape: "badge" } },
-  { tab: "info", name: "新商品",     en: "New Item",   src: null, dummy: { text: "新商品",   color: "#5b3319", shape: "badge" } },
+  // ── ランチ ──
+  { tab: "lunch", name: "本日のランチ", en: "Watercolor", src: "images/w-lunch.png" },
+  { tab: "lunch", name: "本日のランチ", en: "Gold Frame", src: "images/g-lunch.png" },
+  { tab: "lunch", name: "本日のランチ", en: "Navy",       src: "images/n-lunch.png" },
 
-  // 装飾
-  { tab: "deco", name: "キラキラ",   en: "Sparkle",    src: null, dummy: { text: "✨", color: "#c9a43a", shape: "glyph" } },
-  { tab: "deco", name: "ハート",     en: "Heart",      src: null, dummy: { text: "♥", color: "#c9707a", shape: "glyph" } },
-  { tab: "deco", name: "星",         en: "Star",       src: null, dummy: { text: "★", color: "#c9a43a", shape: "glyph" } },
-  { tab: "deco", name: "吹き出し",   en: "Message",    src: null, dummy: { text: "ひとこと", color: "#5b3319", shape: "bubble" } },
+  // ── お知らせ ──
+  { tab: "info", name: "営業時間",           en: "Watercolor", src: "images/w-info-hours.png" },
+  { tab: "info", name: "営業時間",           en: "Gold Frame", src: "images/g-info-hours.png" },
+  { tab: "info", name: "営業時間",           en: "Navy",       src: "images/n-info-hours.png" },
+  { tab: "info", name: "ご来店お待ちしております", en: "Watercolor", src: "images/w-info-welcome.png" },
+  { tab: "info", name: "ご来店お待ちしております", en: "Gold Frame", src: "images/g-info-welcome.png" },
+  { tab: "info", name: "ご来店お待ちしております", en: "Navy",       src: "images/n-info-welcome.png" },
+  { tab: "info", name: "お知らせ",           en: "Watercolor", src: "images/w-info-notice.png" },
+  { tab: "info", name: "お知らせ",           en: "Gold Frame", src: "images/g-info-notice.png" },
+  { tab: "info", name: "お知らせ",           en: "Navy",       src: "images/n-info-notice.png" },
 
-  // 季節
-  { tab: "season", name: "桜",       en: "Spring",     src: null, dummy: { text: "🌸", color: "#f4a6bd", shape: "glyph" } },
-  { tab: "season", name: "ひまわり", en: "Summer",     src: null, dummy: { text: "🌻", color: "#f0b429", shape: "glyph" } },
-  { tab: "season", name: "もみじ",   en: "Autumn",     src: null, dummy: { text: "🍁", color: "#d9672a", shape: "glyph" } },
-  { tab: "season", name: "雪",       en: "Winter",     src: null, dummy: { text: "❄", color: "#6fb0d8", shape: "glyph" } }
+  // ── 小物・装飾 ──
+  { tab: "deco", name: "いちごを抱えたくま", en: "Watercolor", src: "images/w-bear-strawberry.png" },
+  { tab: "deco", name: "いちご",             en: "Watercolor", src: "images/w-strawberry.png" },
+  { tab: "deco", name: "ショートケーキ",     en: "Watercolor", src: "images/w-cake-slice.png" },
+  { tab: "deco", name: "カップケーキ",       en: "Watercolor", src: "images/w-cupcake.png" },
+  { tab: "deco", name: "王冠",               en: "Watercolor", src: "images/w-crown.png" },
+  { tab: "deco", name: "ハート",             en: "Watercolor", src: "images/w-heart.png" },
+  { tab: "deco", name: "リボン",             en: "Watercolor", src: "images/w-bow.png" },
+  { tab: "deco", name: "肉球",               en: "Watercolor", src: "images/w-paw.png" },
+  { tab: "deco", name: "いちご",             en: "Navy", src: "images/n-strawberry.png" },
+  { tab: "deco", name: "ショートケーキ",     en: "Navy", src: "images/n-cake-slice.png" },
+  { tab: "deco", name: "ティーポット",       en: "Navy", src: "images/n-teapot.png" },
+  { tab: "deco", name: "ティーカップ",       en: "Navy", src: "images/n-teacup.png" },
+  { tab: "deco", name: "スコーン",           en: "Navy", src: "images/n-scones.png" },
+  { tab: "deco", name: "ユニオンジャック",   en: "Navy", src: "images/n-flag.png" }
 ];
 
 /* ===================== ダミー画像（透過PNG）を生成 ===================== */
@@ -499,6 +517,8 @@ function renderGrid() {
     const img = document.createElement("img");
     img.alt = "";
     img.src = thumbURL(item);
+    img.loading = "lazy";
+    img.decoding = "async";
     thumb.appendChild(img);
 
     const en = document.createElement("span");
