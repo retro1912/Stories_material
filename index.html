@@ -531,8 +531,39 @@ function closeSheet() { overlayEl.classList.remove("open"); }
 overlayEl.addEventListener("click", function (e) { if (e.target === overlayEl) closeSheet(); });
 
 /* ---------- 起動 ---------- */
-fetch("images.json", { cache: "no-cache" })
-  .then(function (r) { if (!r.ok) throw new Error("no list"); return r.json(); })
+// 素材の一覧は、まずGitHubから直接取得（アップロードするだけで反映される）。
+// 取得できないときは images.json を使う。
+function listFromGitHub() {
+  const host = location.hostname;
+  if (!/\.github\.io$/.test(host)) return Promise.reject(new Error("not github pages"));
+  const owner = host.replace(/\.github\.io$/, "");
+  const seg = location.pathname.split("/")[1];
+  const repo = (seg && !/\.html?$/i.test(seg)) ? seg : host;
+  try {
+    const c = JSON.parse(localStorage.getItem("cafeStoryList") || "null");
+    if (c && c.repo === repo && Date.now() - c.t < 5 * 60 * 1000 && c.list.length) return Promise.resolve(c.list);
+  } catch (e) {}
+  return fetch("https://api.github.com/repos/" + owner + "/" + repo + "/contents/images", {
+    headers: { Accept: "application/vnd.github+json" }
+  })
+    .then(function (r) { if (!r.ok) throw new Error("api"); return r.json(); })
+    .then(function (arr) {
+      const list = arr
+        .filter(function (x) { return x.type === "file" && /\.(png|webp|jpe?g|gif)$/i.test(x.name); })
+        .map(function (x) { return x.name; });
+      if (!list.length) throw new Error("empty");
+      try { localStorage.setItem("cafeStoryList", JSON.stringify({ t: Date.now(), repo: repo, list: list })); } catch (e) {}
+      return list;
+    });
+}
+
+function listFromJson() {
+  return fetch("images.json", { cache: "no-cache" })
+    .then(function (r) { if (!r.ok) throw new Error("no list"); return r.json(); });
+}
+
+listFromGitHub()
+  .catch(listFromJson)
   .then(setup)
   .catch(function () {
     secTitleEl.textContent = "";
